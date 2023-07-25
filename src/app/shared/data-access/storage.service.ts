@@ -1,42 +1,72 @@
-import { inject, Injectable, InjectionToken, PLATFORM_ID } from "@angular/core";
-import { of } from "rxjs";
+import { Injectable } from "@angular/core";
+import {
+  addRxPlugin,
+  RxCollection,
+  RxDatabase,
+  RxDocument,
+  RxJsonSchema,
+} from "rxdb";
+import { RxDBDevModePlugin } from "rxdb/plugins/dev-mode";
+import { createRxDatabase } from "rxdb";
+import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
+import { from, shareReplay } from "rxjs";
 import { Checklist } from "../interfaces/checklist";
-import { ChecklistItem } from "../interfaces/checklist-item";
 
-export const LOCAL_STORAGE = new InjectionToken<Storage>(
-  "window local storage object",
-  {
-    providedIn: "root",
-    factory: () => {
-      return inject(PLATFORM_ID) === "browser"
-        ? window.localStorage
-        : ({} as Storage);
-    },
-  }
-);
+export type ChecklistDocument = RxDocument<Checklist>;
+export type ChecklistCollection = RxCollection<Checklist>;
+export type DatabaseCollections = {
+  checklists: ChecklistCollection;
+};
+export type QuicklistsDatabase = RxDatabase<DatabaseCollections>;
 
 @Injectable({
   providedIn: "root",
 })
 export class StorageService {
 
-  storage = inject(LOCAL_STORAGE);
+  db$ = from(this.initDb()).pipe(shareReplay(1))
+  
+  async initDb() {
+    addRxPlugin(RxDBDevModePlugin);
 
-  loadChecklists() {
-    const checklists = this.storage.getItem("checklists");
-    return of(checklists ? JSON.parse(checklists) as Checklist[] : []);
-  }
+    const db = await createRxDatabase<DatabaseCollections>({
+      name: "quicklists",
+      storage: getRxStorageDexie(),
+    });
 
-  loadChecklistItems() {
-    const checklists = this.storage.getItem("checklistItems");
-    return of(checklists ? JSON.parse(checklists) : []);
-  }
+    const checklistsSchema: RxJsonSchema<Checklist> = {
+      version: 0,
+      primaryKey: "id",
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+        },
+        title: {
+          type: "string",
+        },
+        checklistItems: {
+          type: "object",
+          properties: {
+            id: {
+              type: "string",
+            },
+            title: {
+              type: "string",
+            },
+            checked: {
+              type: "boolean",
+            },
+          },
+        },
+      },
+      required: ["id", "title"],
+    };
 
-  saveChecklists(checklists: Checklist[]) {
-      this.storage.setItem("checklists", JSON.stringify(checklists));
-  }
-
-  saveChecklistItems(checklistItems: ChecklistItem[]) {
-      this.storage.setItem("checklistItems", JSON.stringify(checklistItems));
+    return await db.addCollections({
+      checklists: {
+        schema: checklistsSchema,
+      },
+    });
   }
 }
