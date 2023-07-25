@@ -9,7 +9,7 @@ import {
 import { RxDBDevModePlugin } from "rxdb/plugins/dev-mode";
 import { createRxDatabase } from "rxdb";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
-import { from, shareReplay } from "rxjs";
+import { from, shareReplay, switchMap } from "rxjs";
 import { Checklist } from "../interfaces/checklist";
 
 export type ChecklistDocument = RxDocument<Checklist>;
@@ -25,6 +25,9 @@ export type QuicklistsDatabase = RxDatabase<DatabaseCollections>;
 export class StorageService {
 
   db$ = from(this.initDb()).pipe(shareReplay(1))
+  checklists$ = this.db$.pipe(
+    switchMap((db) => db.checklists.find().$)
+  ) 
   
   async initDb() {
     addRxPlugin(RxDBDevModePlugin);
