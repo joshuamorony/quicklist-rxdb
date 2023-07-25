@@ -1,6 +1,7 @@
 import { Injectable, signal, effect, computed, inject } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Subject } from "rxjs";
+import { ActivatedRoute } from "@angular/router";
+import { Subject, switchMap, withLatestFrom } from "rxjs";
 import { RemoveChecklist } from "src/app/shared/interfaces/checklist";
 import { StorageService } from "../../shared/data-access/storage.service";
 import {
@@ -20,6 +21,7 @@ export interface ChecklistItemsState {
 })
 export class ChecklistItemService {
   private storageService = inject(StorageService);
+  private route = inject(ActivatedRoute);
 
   // state
   private state = signal<ChecklistItemsState>({
@@ -32,17 +34,20 @@ export class ChecklistItemService {
   loaded = computed(() => this.state().loaded);
 
   // sources
-  private checklistItemsLoaded$ = this.storageService.loadChecklistItems();
+  private checklistItemsLoaded$ = this.route.paramMap.pipe(
+    switchMap((params) =>
+      this.storageService.getChecklistItems(params.get("id")!)
+    )
+  );
 
   add$ = new Subject<AddChecklistItem>();
   remove$ = new Subject<RemoveChecklistItem>();
   edit$ = new Subject<EditChecklistItem>();
-  checklistRemoved$ = new Subject<RemoveChecklist>();
   toggle$ = new Subject<RemoveChecklistItem>();
   reset$ = new Subject<RemoveChecklist>();
 
   constructor() {
-    // reducers
+    // reducer
     this.checklistItemsLoaded$
       .pipe(takeUntilDestroyed())
       .subscribe((checklistItems) =>
@@ -53,71 +58,91 @@ export class ChecklistItemService {
         }))
       );
 
-    this.add$.pipe(takeUntilDestroyed()).subscribe((checklistItem) =>
-      this.state.update((state) => ({
-        ...state,
-        checklistItems: [
-          ...state.checklistItems,
-          {
-            id: Date.now().toString(),
-            checklistId: checklistItem.checklistId,
-            checked: false,
-            ...checklistItem.item,
-          },
-        ],
-      }))
-    );
+    // db updates
+    this.add$
+      .pipe(withLatestFrom(this.storageService.db$), takeUntilDestroyed())
+      .subscribe(async ([checklistItem, db]) => {
+        const checklistToUpdate = await db.checklists
+          .findOne(checklistItem.checklistId)
+          .exec();
 
-    this.remove$.pipe(takeUntilDestroyed()).subscribe((id) =>
-      this.state.update((state) => ({
-        ...state,
-        checklistItems: state.checklistItems.filter((item) => item.id !== id),
-      }))
-    );
+        checklistToUpdate.modify((checklist: any) => ({
+          ...checklist,
+          checklistItems: [
+            ...checklist.checklistItems,
+            {
+              id: Date.now().toString(),
+              checked: false,
+              ...checklistItem.item,
+            },
+          ],
+        }));
+      });
 
-    this.edit$.pipe(takeUntilDestroyed()).subscribe((update) =>
-      this.state.update((state) => ({
-        ...state,
-        checklistItems: state.checklistItems.map((item) =>
-          item.id === update.id ? { ...item, title: update.data.title } : item
-        ),
-      }))
-    );
+    this.remove$
+      .pipe(withLatestFrom(this.storageService.db$), takeUntilDestroyed())
+      .subscribe(async ([ids, db]) => {
+        const checklistToUpdate = await db.checklists
+          .findOne(ids.checklistId)
+          .exec();
 
-    this.checklistRemoved$.pipe(takeUntilDestroyed()).subscribe((checklistId) =>
-      this.state.update((state) => ({
-        ...state,
-        checklistItems: state.checklistItems.filter(
-          (item) => item.checklistId !== checklistId
-        ),
-      }))
-    );
+        checklistToUpdate.modify((checklist: any) => ({
+          ...checklist,
+          checklistItems: checklist.checklistItems.filter(
+            (item: any) => item.id !== ids.checklistItemId
+          ),
+        }));
+      });
 
-    this.toggle$.pipe(takeUntilDestroyed()).subscribe((checklistItemId) =>
-      this.state.update((state) => ({
-        ...state,
-        checklistItems: state.checklistItems.map((item) =>
-          item.id === checklistItemId
-            ? { ...item, checked: !item.checked }
-            : item
-        ),
-      }))
-    );
+    this.edit$
+      .pipe(withLatestFrom(this.storageService.db$), takeUntilDestroyed())
+      .subscribe(async ([update, db]) => {
+        const checklistToUpdate = await db.checklists
+          .findOne(update.checklistId)
+          .exec();
 
-    this.reset$.pipe(takeUntilDestroyed()).subscribe((checklistId) =>
-      this.state.update((state) => ({
-        ...state,
-        checklistItems: state.checklistItems.map((item) =>
-          item.checklistId === checklistId ? { ...item, checked: false } : item
-        ),
-      }))
-    );
+        checklistToUpdate.modify((checklist: any) => ({
+          ...checklist,
+          checklistItems: checklist.checklistItems.map((item: any) =>
+            item.id === update.checklistItemId
+              ? { ...item, title: update.data.title }
+              : item
+          ),
+        }));
+      });
 
-    // effects
-    effect(() => {
-      if (this.loaded()) {
-        this.storageService.saveChecklistItems(this.checklistItems());
-      }
-    });
+    this.toggle$
+      .pipe(withLatestFrom(this.storageService.db$), takeUntilDestroyed())
+      .subscribe(async ([ids, db]) => {
+        const checklistToUpdate = await db.checklists
+          .findOne(ids.checklistId)
+          .exec();
+
+        checklistToUpdate.modify((checklist: any) => ({
+          ...checklist,
+          checklistItems: checklist.checklistItems.map((item: any) =>
+            item.id === ids.checklistItemId
+              ? { ...item, checked: !item.checked }
+              : item
+          ),
+        }));
+      });
+
+    this.reset$
+      .pipe(withLatestFrom(this.storageService.db$), takeUntilDestroyed())
+      .subscribe(async ([checklistId, db]) => {
+        const checklistToUpdate = await db.checklists
+          .findOne(checklistId)
+          .exec();
+
+        checklistToUpdate.modify((checklist: any) => ({
+          ...checklist,
+          checklistItems: checklist.checklistItems.map((item: any) =>
+            item.checklistId === checklistId
+              ? { ...item, checked: false }
+              : item
+          ),
+        }));
+      });
   }
 }

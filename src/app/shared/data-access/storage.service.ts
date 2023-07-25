@@ -23,12 +23,15 @@ export type QuicklistsDatabase = RxDatabase<DatabaseCollections>;
   providedIn: "root",
 })
 export class StorageService {
+  db$ = from(this.initDb()).pipe(shareReplay(1));
+  checklists$ = this.db$.pipe(switchMap((db) => db.checklists.find().$));
 
-  db$ = from(this.initDb()).pipe(shareReplay(1))
-  checklists$ = this.db$.pipe(
-    switchMap((db) => db.checklists.find().$)
-  ) 
-  
+  getChecklistItems(checklistId: string) {
+    return this.db$.pipe(
+      switchMap((db) => db.checklists.findOne(checklistId).$)
+    );
+  }
+
   async initDb() {
     addRxPlugin(RxDBDevModePlugin);
 

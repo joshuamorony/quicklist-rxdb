@@ -31,8 +31,18 @@ import { ChecklistItemListComponent } from "./ui/checklist-item-list.component";
 
     <app-checklist-item-list
       [checklistItems]="items()"
-      (toggle)="cis.toggle$.next($event)"
-      (delete)="cis.remove$.next($event)"
+      (toggle)="
+        cis.toggle$.next({
+          checklistId: checklist()!.id,
+          checklistItemId: $event
+        })
+      "
+      (delete)="
+        cis.remove$.next({
+          checklistId: checklist()!.id,
+          checklistItemId: $event
+        })
+      "
       (edit)="checklistItemBeingEdited.set($event)"
     />
 
@@ -45,7 +55,8 @@ import { ChecklistItemListComponent } from "./ui/checklist-item-list.component";
           (save)="
             checklistItemBeingEdited()?.id
               ? cis.edit$.next({
-                id: checklistItemBeingEdited()!.id!,
+                checklistId: checklist()!.id,
+                checklistItemId: checklistItemBeingEdited()!.id!,
                 data: checklistItemForm.getRawValue(),
               })
               : cis.add$.next({
