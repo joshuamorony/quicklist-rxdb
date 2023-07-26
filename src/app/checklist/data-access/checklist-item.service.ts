@@ -140,8 +140,6 @@ export class ChecklistItemService {
           .findOne(checklistId)
           .exec();
 
-        console.log(checklistToUpdate);
-
         if (!checklistToUpdate) return;
 
         checklistToUpdate.modify((checklist) => ({

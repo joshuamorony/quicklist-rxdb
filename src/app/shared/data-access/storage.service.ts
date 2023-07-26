@@ -11,6 +11,7 @@ import { createRxDatabase } from "rxdb";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
 import { from, shareReplay, switchMap } from "rxjs";
 import { Checklist, checklistsSchema } from "../interfaces/checklist";
+import { environment } from "src/environments/environment.development";
 
 export type ChecklistDocument = RxDocument<Checklist>;
 export type ChecklistCollection = RxCollection<Checklist>;
@@ -33,7 +34,10 @@ export class StorageService {
   }
 
   async initDb() {
+    if(!environment.production){
+
     addRxPlugin(RxDBDevModePlugin);
+    }
 
     const db = await createRxDatabase<DatabaseCollections>({
       name: "quicklists",
