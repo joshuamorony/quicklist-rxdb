@@ -16,9 +16,7 @@ export interface ChecklistItemsState {
   loaded: boolean;
 }
 
-@Injectable({
-  providedIn: "root",
-})
+@Injectable()
 export class ChecklistItemService {
   private storageService = inject(StorageService);
   private route = inject(ActivatedRoute);
@@ -87,7 +85,7 @@ export class ChecklistItemService {
           .findOne(ids.checklistId)
           .exec();
 
-        if(!checklistToUpdate) return;
+        if (!checklistToUpdate) return;
 
         checklistToUpdate.modify((checklist) => ({
           ...checklist,
@@ -104,7 +102,7 @@ export class ChecklistItemService {
           .findOne(update.checklistId)
           .exec();
 
-        if(!checklistToUpdate) return;
+        if (!checklistToUpdate) return;
 
         checklistToUpdate.modify((checklist) => ({
           ...checklist,
@@ -123,7 +121,7 @@ export class ChecklistItemService {
           .findOne(ids.checklistId)
           .exec();
 
-        if(!checklistToUpdate) return;
+        if (!checklistToUpdate) return;
 
         checklistToUpdate.modify((checklist) => ({
           ...checklist,
@@ -142,15 +140,16 @@ export class ChecklistItemService {
           .findOne(checklistId)
           .exec();
 
-        if(!checklistToUpdate) return;
+        console.log(checklistToUpdate);
+
+        if (!checklistToUpdate) return;
 
         checklistToUpdate.modify((checklist) => ({
           ...checklist,
-          checklistItems: checklist.checklistItems.map((item) =>
-            item.id === checklistId
-              ? { ...item, checked: false }
-              : item
-          ),
+          checklistItems: checklist.checklistItems.map((item) => ({
+            ...item,
+            checked: false,
+          })),
         }));
       });
   }

@@ -68,6 +68,7 @@ import { ChecklistItemListComponent } from "./ui/checklist-item-list.component";
       </ng-template>
     </app-modal>
   `,
+  providers: [ChecklistItemService]
 })
 export default class ChecklistComponent {
   cs = inject(ChecklistService);
