@@ -1,7 +1,7 @@
-import { Injectable, signal, effect, computed, inject } from "@angular/core";
+import { Injectable, signal, computed, inject } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute } from "@angular/router";
-import { Subject, switchMap, withLatestFrom } from "rxjs";
+import { map, Subject, switchMap, withLatestFrom } from "rxjs";
 import { RemoveChecklist } from "src/app/shared/interfaces/checklist";
 import { StorageService } from "../../shared/data-access/storage.service";
 import {
@@ -35,9 +35,8 @@ export class ChecklistItemService {
 
   // sources
   private checklistItemsLoaded$ = this.route.paramMap.pipe(
-    switchMap((params) =>
-      this.storageService.getChecklistItems(params.get("id")!)
-    )
+    switchMap((params) => this.storageService.getChecklist(params.get("id")!)),
+    map((checklist) => (checklist ? checklist.checklistItems : []))
   );
 
   add$ = new Subject<AddChecklistItem>();
@@ -66,7 +65,9 @@ export class ChecklistItemService {
           .findOne(checklistItem.checklistId)
           .exec();
 
-        checklistToUpdate.modify((checklist: any) => ({
+        if (!checklistToUpdate) return;
+
+        checklistToUpdate.modify((checklist) => ({
           ...checklist,
           checklistItems: [
             ...checklist.checklistItems,
@@ -86,10 +87,12 @@ export class ChecklistItemService {
           .findOne(ids.checklistId)
           .exec();
 
-        checklistToUpdate.modify((checklist: any) => ({
+        if(!checklistToUpdate) return;
+
+        checklistToUpdate.modify((checklist) => ({
           ...checklist,
           checklistItems: checklist.checklistItems.filter(
-            (item: any) => item.id !== ids.checklistItemId
+            (item) => item.id !== ids.checklistItemId
           ),
         }));
       });
@@ -101,9 +104,11 @@ export class ChecklistItemService {
           .findOne(update.checklistId)
           .exec();
 
-        checklistToUpdate.modify((checklist: any) => ({
+        if(!checklistToUpdate) return;
+
+        checklistToUpdate.modify((checklist) => ({
           ...checklist,
-          checklistItems: checklist.checklistItems.map((item: any) =>
+          checklistItems: checklist.checklistItems.map((item) =>
             item.id === update.checklistItemId
               ? { ...item, title: update.data.title }
               : item
@@ -118,9 +123,11 @@ export class ChecklistItemService {
           .findOne(ids.checklistId)
           .exec();
 
-        checklistToUpdate.modify((checklist: any) => ({
+        if(!checklistToUpdate) return;
+
+        checklistToUpdate.modify((checklist) => ({
           ...checklist,
-          checklistItems: checklist.checklistItems.map((item: any) =>
+          checklistItems: checklist.checklistItems.map((item) =>
             item.id === ids.checklistItemId
               ? { ...item, checked: !item.checked }
               : item
@@ -135,10 +142,12 @@ export class ChecklistItemService {
           .findOne(checklistId)
           .exec();
 
-        checklistToUpdate.modify((checklist: any) => ({
+        if(!checklistToUpdate) return;
+
+        checklistToUpdate.modify((checklist) => ({
           ...checklist,
-          checklistItems: checklist.checklistItems.map((item: any) =>
-            item.checklistId === checklistId
+          checklistItems: checklist.checklistItems.map((item) =>
+            item.id === checklistId
               ? { ...item, checked: false }
               : item
           ),

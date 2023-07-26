@@ -1,8 +1,7 @@
-import { computed, effect, inject, Injectable, signal } from "@angular/core";
+import { computed, inject, Injectable, signal } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { Subject, switchMap, withLatestFrom } from "rxjs";
-import { ChecklistItemService } from "../../checklist/data-access/checklist-item.service";
-import { AddChecklist } from "../interfaces/checklist";
+import { Subject, withLatestFrom } from "rxjs";
+import { AddChecklist, RemoveChecklist } from "../interfaces/checklist";
 import { StorageService } from "./storage.service";
 import { Checklist, EditChecklist } from "../interfaces/checklist";
 
@@ -16,7 +15,6 @@ export interface ChecklistsState {
   providedIn: "root",
 })
 export class ChecklistService {
-  private checklistItemService = inject(ChecklistItemService);
   private storageService = inject(StorageService);
 
   // state
@@ -35,7 +33,7 @@ export class ChecklistService {
   private checklistsLoaded$ = this.storageService.checklists$;
   add$ = new Subject<AddChecklist>();
   edit$ = new Subject<EditChecklist>();
-  remove$ = this.checklistItemService.checklistRemoved$;
+  remove$ = new Subject<RemoveChecklist>();
 
   constructor() {
     // reducer
@@ -53,14 +51,20 @@ export class ChecklistService {
     this.add$
       .pipe(withLatestFrom(this.storageService.db$), takeUntilDestroyed())
       .subscribe(([checklist, db]) => {
-        db.checklists.insert(this.addIdToChecklist(checklist));
+        db.checklists.insert({
+          ...this.addIdToChecklist(checklist),
+          checklistItems: [],
+        });
       });
 
     this.edit$
       .pipe(withLatestFrom(this.storageService.db$), takeUntilDestroyed())
       .subscribe(async ([update, db]) => {
         const checklistToUpdate = await db.checklists.findOne(update.id).exec();
-        checklistToUpdate.modify((checklist: any) => ({
+
+        if (!checklistToUpdate) return;
+
+        checklistToUpdate.modify((checklist) => ({
           ...checklist,
           title: update.data.title,
         }));
@@ -70,7 +74,9 @@ export class ChecklistService {
       .pipe(withLatestFrom(this.storageService.db$), takeUntilDestroyed())
       .subscribe(async ([id, db]) => {
         const checklistToRemove = await db.checklists.findOne(id).exec();
-        checklistToRemove.remove();
+        if(!checklistToRemove) return;
+
+          checklistToRemove.remove();
       });
   }
 

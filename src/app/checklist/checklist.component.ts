@@ -30,7 +30,7 @@ import { ChecklistItemListComponent } from "./ui/checklist-item-list.component";
     />
 
     <app-checklist-item-list
-      [checklistItems]="items()"
+      [checklistItems]="cis.checklistItems()"
       (toggle)="
         cis.toggle$.next({
           checklistId: checklist()!.id,
@@ -79,12 +79,6 @@ export default class ChecklistComponent {
 
   params = toSignal(this.route.paramMap);
 
-  items = computed(() =>
-    this.cis
-      .checklistItems()
-      .filter((item) => item.checklistId === this.params()?.get("id"))
-  );
-
   checklist = computed(() =>
     this.cs
       .checklists()
@@ -96,7 +90,6 @@ export default class ChecklistComponent {
   });
 
   constructor() {
-    // TODO: Use [patchValue] directive to react to signal in template
     effect(() => {
       const item = this.checklistItemBeingEdited();
       if (item) {

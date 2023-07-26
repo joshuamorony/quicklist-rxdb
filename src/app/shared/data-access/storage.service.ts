@@ -10,7 +10,7 @@ import { RxDBDevModePlugin } from "rxdb/plugins/dev-mode";
 import { createRxDatabase } from "rxdb";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
 import { from, shareReplay, switchMap } from "rxjs";
-import { Checklist } from "../interfaces/checklist";
+import { Checklist, checklistsSchema } from "../interfaces/checklist";
 
 export type ChecklistDocument = RxDocument<Checklist>;
 export type ChecklistCollection = RxCollection<Checklist>;
@@ -26,7 +26,7 @@ export class StorageService {
   db$ = from(this.initDb()).pipe(shareReplay(1));
   checklists$ = this.db$.pipe(switchMap((db) => db.checklists.find().$));
 
-  getChecklistItems(checklistId: string) {
+  getChecklist(checklistId: string) {
     return this.db$.pipe(
       switchMap((db) => db.checklists.findOne(checklistId).$)
     );
@@ -40,39 +40,12 @@ export class StorageService {
       storage: getRxStorageDexie(),
     });
 
-    const checklistsSchema: RxJsonSchema<Checklist> = {
-      version: 0,
-      primaryKey: "id",
-      type: "object",
-      properties: {
-        id: {
-          type: "string",
-        },
-        title: {
-          type: "string",
-        },
-        checklistItems: {
-          type: "object",
-          properties: {
-            id: {
-              type: "string",
-            },
-            title: {
-              type: "string",
-            },
-            checked: {
-              type: "boolean",
-            },
-          },
-        },
-      },
-      required: ["id", "title"],
-    };
-
-    return await db.addCollections({
+    await db.addCollections({
       checklists: {
         schema: checklistsSchema,
       },
     });
+
+    return db;
   }
 }
