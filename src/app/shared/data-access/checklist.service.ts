@@ -74,9 +74,9 @@ export class ChecklistService {
       .pipe(withLatestFrom(this.storageService.db$), takeUntilDestroyed())
       .subscribe(async ([id, db]) => {
         const checklistToRemove = await db.checklists.findOne(id).exec();
-        if(!checklistToRemove) return;
+        if (!checklistToRemove) return;
 
-          checklistToRemove.remove();
+        checklistToRemove.remove();
       });
   }
 
