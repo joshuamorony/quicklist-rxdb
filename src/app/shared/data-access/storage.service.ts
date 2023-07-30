@@ -9,6 +9,7 @@ import {
 import { RxDBDevModePlugin } from "rxdb/plugins/dev-mode";
 import { createRxDatabase } from "rxdb";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
+import { replicateCouchDB } from "rxdb/plugins/replication-couchdb";
 import { from, shareReplay, switchMap } from "rxjs";
 import { Checklist, checklistsSchema } from "../interfaces/checklist";
 import { environment } from "../../../environments/environment";
@@ -48,6 +49,17 @@ export class StorageService {
         schema: checklistsSchema,
       },
     });
+
+    const replication = replicateCouchDB({
+      collection: db.checklists,
+      url: "http://localhost:5984/quicklists/",
+      live: true,
+      push: {},
+      pull: {}
+    });
+
+    // log errors
+    replication.error$.subscribe((err) => console.log(err));
 
     return db;
   }
