@@ -9,7 +9,8 @@
         "@schematics/angular:component": {
           "inlineTemplate": true,
           "inlineStyle": true,
-          "skipTests": true
+          "skipTests": true,
+          "style": "scss"
         },
         "@schematics/angular:class": {
           "skipTests": true
@@ -52,8 +53,9 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles.css"
+              "src/styles.scss"
             ],
+            "inlineStyleLanguage": "scss",
             "scripts": []
           },
           "configurations": {

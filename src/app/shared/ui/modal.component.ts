@@ -11,7 +11,7 @@ import { CommonModule } from "@angular/common";
 export class ModalComponent {
   @Input() set isOpen(value: boolean) {
     if (value) {
-      this.dialog.open(this.template);
+      this.dialog.open(this.template, { panelClass: 'dialog-container' });
     } else {
       this.dialog.closeAll();
     }

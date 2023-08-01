@@ -7,27 +7,48 @@ import { FormGroup, ReactiveFormsModule } from "@angular/forms";
   imports: [ReactiveFormsModule, CommonModule],
   selector: "app-form-modal",
   template: `
-    <h2>{{ title }}</h2>
-    <button (click)="dismiss()">close</button>
-    <form [formGroup]="formGroup" (ngSubmit)="handleSave()">
-      <div *ngFor="let control of formGroup.controls | keyvalue">
-        <label>{{ control.key }}</label>
-        <input type="text" [formControlName]="control.key" />
-      </div>
-      <button color="dark" type="submit" [disabled]="!formGroup.valid">
-        Save
-      </button>
-    </form>
+    <header>
+      <h2>{{ title }}</h2>
+      <button (click)="dismiss()">close</button>
+    </header>
+    <section>
+      <form [formGroup]="formGroup" (ngSubmit)="handleSave()">
+        <div *ngFor="let control of formGroup.controls | keyvalue">
+          <label>{{ control.key }}</label>
+          <input type="text" [formControlName]="control.key" />
+        </div>
+        <button color="dark" type="submit" [disabled]="!formGroup.valid">
+          Save
+        </button>
+      </form>
+    </section>
   `,
   styles: [
     `
-      :host {
-        height: 100%;
-      }
-
       form {
         padding: 1rem;
       }
+
+      div {
+        display: flex;
+        flex-direction: column;
+
+        label {
+          margin-bottom: 1rem;
+          font-weight: bold;
+        }
+
+        input {
+          font-size: 1.5rem;
+          padding: 10px;
+        }
+      }
+
+      section button {
+        margin-top: 1rem;
+        width: 100%;
+      }
+
     `,
   ],
 })

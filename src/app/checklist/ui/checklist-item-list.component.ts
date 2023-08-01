@@ -1,10 +1,5 @@
 import { CommonModule } from "@angular/common";
-import {
-  Component,
-  EventEmitter,
-  Input,
-  Output,
-} from "@angular/core";
+import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { ChecklistItem } from "../../shared/interfaces/checklist-item";
 
 @Component({
@@ -12,21 +7,48 @@ import { ChecklistItem } from "../../shared/interfaces/checklist-item";
   imports: [CommonModule],
   selector: "app-checklist-item-list",
   template: `
-    <ul>
-      <li *ngFor="let item of checklistItems; trackBy: trackByFn">
-        <span *ngIf="item.checked">[DONE]</span>
-        {{ item.title }}
-        <button (click)="toggleItem(item.id)">Toggle</button>
-        <button (click)="edit.emit(item)">Edit</button>
-        <button (click)="delete.emit(item.id)">Delete</button>
-      </li>
-    </ul>
+    <section>
+      <ul>
+        <li *ngFor="let item of checklistItems; trackBy: trackByFn">
+          <div>
+            {{ item.title }}
+            <span *ngIf="item.checked">✅</span>
+          </div>
+          <div>
+            <button (click)="toggleItem(item.id)">Toggle</button>
+            <button (click)="edit.emit(item)">Edit</button>
+            <button (click)="delete.emit(item.id)">Delete</button>
+          </div>
+        </li>
+      </ul>
 
-    <div *ngIf="checklistItems.length === 0">
-      <h2>Add an item</h2>
-      <p>Click the add button to add your first item to this quicklist</p>
-    </div>
+      <div *ngIf="checklistItems.length === 0">
+        <h2>Add an item</h2>
+        <p>Click the add button to add your first item to this quicklist</p>
+      </div>
+    </section>
   `,
+  styles: [
+    `
+      ul {
+        padding: 0;
+        margin: 0;
+      }
+      li {
+        font-size: 1.5em;
+        display: flex;
+        justify-content: space-between;
+        background: var(--color-light);
+        list-style-type: none;
+        margin-bottom: 1rem;
+        padding: 1rem;
+
+        button {
+          margin-left: 1rem;
+        }
+      }
+    `,
+  ],
 })
 export class ChecklistItemListComponent {
   @Input() checklistItems!: ChecklistItem[];

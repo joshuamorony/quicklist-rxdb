@@ -11,23 +11,27 @@ import { ChecklistListComponent } from "./ui/checklist-list.component";
   standalone: true,
   selector: "app-home",
   template: `
-    <h1>Quicklists</h1>
-    <button (click)="checklistBeingEdited.set({})">Add</button>
+    <header>
+      <h1>Quicklists</h1>
+      <button (click)="checklistBeingEdited.set({})">Add Checklist</button>
+    </header>
 
-    <h2>Your checklists</h2>
-    
-    <p *ngIf="error()">{{ error() }}</p>
+    <section>
+      <h2>Your checklists</h2>
 
-    <app-checklist-list
-      [checklists]="checklists()"
-      (delete)="cs.remove$.next($event)"
-      (edit)="checklistBeingEdited.set($event)"
-    />
+      <p *ngIf="error()">{{ error() }}</p>
+
+      <app-checklist-list
+        [checklists]="checklists()"
+        (delete)="cs.remove$.next($event)"
+        (edit)="checklistBeingEdited.set($event)"
+      />
+    </section>
 
     <app-modal [isOpen]="!!checklistBeingEdited()">
       <ng-template>
         <app-form-modal
-          title="test"
+          [title]="checklistBeingEdited()?.title ? checklistBeingEdited()!.title! : 'Add Checklist'"
           [formGroup]="checklistForm"
           (close)="checklistBeingEdited.set(null)"
           (save)="
@@ -47,7 +51,7 @@ import { ChecklistListComponent } from "./ui/checklist-list.component";
     FormModalComponent,
     ReactiveFormsModule,
     ChecklistListComponent,
-    CommonModule
+    CommonModule,
   ],
 })
 export default class HomeComponent {

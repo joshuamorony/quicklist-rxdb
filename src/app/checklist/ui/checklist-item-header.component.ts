@@ -9,11 +9,19 @@ import { Checklist } from "../../shared/interfaces/checklist";
       <h1>
         {{ checklist.title }}
       </h1>
-
-      <button (click)="resetChecklist.emit(checklist.id)">Reset</button>
-      <button (click)="addItem.emit()">Add item</button>
+      <div>
+        <button (click)="resetChecklist.emit(checklist.id)">Reset</button>
+        <button (click)="addItem.emit()">Add item</button>
+      </div>
     </header>
   `,
+  styles: [
+    `
+      button {
+        margin-left: 1rem;
+      }
+    `,
+  ],
 })
 export class ChecklistItemHeaderComponent {
   @Input() checklist!: Checklist;
